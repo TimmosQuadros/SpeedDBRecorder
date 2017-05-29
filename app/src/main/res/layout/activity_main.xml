@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="app.ActivityMain">
+
+    <TextView
+        android:id="@+id/speed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 km/h"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_above="@+id/threshold"
+        android:layout_alignLeft="@+id/threshold"
+        android:layout_alignStart="@+id/threshold" />
+
+    <TextView
+        android:text=""
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/heading"
+        android:textSize="18sp"
+        android:textStyle="normal|bold"
+        android:textAlignment="center" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="21dp"
+        android:text="Start" />
+
+    <TextView
+        android:id="@+id/decibel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:text="0 db"
+        android:layout_centerVertical="true"
+        android:layout_alignRight="@+id/threshold"
+        android:layout_alignEnd="@+id/threshold" />
+
+    <EditText
+        android:id="@+id/threshold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/decibel"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="31dp"
+        android:ems="10"
+        android:inputType="number"
+        android:text="0" />
+
+    <CheckBox
+        android:id="@+id/checkBoxSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/threshold"
+        android:layout_alignStart="@+id/threshold"
+        android:layout_below="@+id/threshold"
+        android:layout_marginTop="28dp"
+        android:text="Speed" />
+
+    <CheckBox
+        android:id="@+id/checkBoxDB"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/threshold"
+        android:layout_alignRight="@+id/threshold"
+        android:layout_alignTop="@+id/checkBoxSpeed"
+        android:text="Decibel" />
+
+    <com.jjoe64.graphview.GraphView
+        android:id="@+id/graph"
+        android:layout_width="wrap_content"
+        android:layout_height="220dip" />
+
+</RelativeLayout>
