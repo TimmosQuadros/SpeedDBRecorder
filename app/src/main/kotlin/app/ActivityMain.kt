@@ -22,13 +22,17 @@ import android.media.AudioRecord
 class ActivityMain : AppCompatActivity(), LocationListener
 {
     private var isRecording = false
+
+    //This is changed in the onRequestPermissionsResult()
     private var permissionToRecordAccepted = false
     private var permissionToUseLocation = false
+
+    //This is standard permission integers
     private val REQUEST_RECORD_AUDIO_PERMISSION = 200
     private val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
     private val ASK_MULTIPLE_PERMISSION_REQUEST_CODE = 123
 
-
+    //The mediarecorder is used instead of the AudioRecorder which is deprecated!
     val mRecorder = MediaRecorder()
     lateinit var aRecorder: AudioRecord
 
@@ -55,23 +59,34 @@ class ActivityMain : AppCompatActivity(), LocationListener
 
     val handler = Handler()
 
+    //EditText (fragment) from layout activity_main.xml id=threshold
+    //When the db or speed is higher than threshold it records data to database and plot data to the graphview
     private var thresholdVal = -1
 
+    //SQLLitedatabase
     val ourDataBase: DB = DB()
+    //Decibel value
     var db = 0
+    //Velocity value
     var v = 0
 
+    //Graph object that we use to append data and plot it to the graph
     private lateinit var graphController: Graph
 
+    //When the activity is created do
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        /*Initialize an address for the MediaReorder in case we want to save the audio to a file.
+        In our case we just use it as an audiometer to measure the sound pressure (decibel)*/
         mFileName = externalCacheDir.absolutePath
         mFileName += "/audiorecordtest.3gp"
 
-        heading.text = "AndroidApp"
+        heading.text = ""
 
+        /*This produces a popup that asks the users for permission to use audio recording and location.
+        * It also triggers the onRequestPermissionsResult() function that we override below.*/
         ActivityCompat.requestPermissions(this, permissions,ASK_MULTIPLE_PERMISSION_REQUEST_CODE)
 
         button.setOnClickListener {
@@ -91,17 +106,25 @@ class ActivityMain : AppCompatActivity(), LocationListener
         }
 
         ourDataBase.setup()//DB_controller
-        graphController = Graph(graph)
+        graphController = Graph(graph) //We just pass a reference of our graph_view to the Graph class...
         graphController.initialize()
 
     }
 
+    /**
+     *
+     */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode==ASK_MULTIPLE_PERMISSION_REQUEST_CODE) {
             permissionToRecordAccepted = grantResults[0] === PackageManager.PERMISSION_GRANTED
             permissionToUseLocation = grantResults[1] === PackageManager.PERMISSION_GRANTED
         }
+
+        //Alternative way of doing it in android using the when switch
+        /*when (requestCode) {
+            ASK_MULTIPLE_PERMISSION_REQUEST_CODE -> permissionToRecordAccepted = grantResults[0] === PackageManager.PERMISSION_GRANTED
+        }*/
 
         //Log.d("bjornson",""+permissionToRecordAccepted+" "+permissionToUseLocation)
         if (!permissionToRecordAccepted) finish()
@@ -158,19 +181,22 @@ class ActivityMain : AppCompatActivity(), LocationListener
     override fun onProviderDisabled(provider: String?) {
         //TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
-    //
 
     fun startTimer() {
         timer = Timer()
         initializeTimerTask()
 
-        timer.schedule(timerTask, 500,500) //Run every 5 sec.
+        timer.schedule(timerTask, 500,500) //Run every 500 ms.
     }
 
     fun stopTimer() {
         timer.cancel()
     }
 
+
+    /**The Media Recorder has a fsm (final state machine) i.e. you have to initialize and then call the prepare() method.
+     *Documentation: https://developer.android.com/reference/android/media/MediaRecorder.html
+     */
     private fun startRecording() {
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
@@ -188,96 +214,11 @@ class ActivityMain : AppCompatActivity(), LocationListener
         }
 
         mRecorder.start()
-
-        aRecorder=findAudioRecord()
     }
 
     private fun stopRecording() {
         mRecorder.stop()
         mRecorder.reset()
-    }
-
-
-    fun findAudioRecord(): AudioRecord {
-        for (rate in mSampleRates) {
-            for (audioFormat in shortArrayOf(AudioFormat.ENCODING_PCM_8BIT.toShort(), AudioFormat.ENCODING_PCM_16BIT.toShort())) {
-                for (channelConfig in shortArrayOf(AudioFormat.CHANNEL_IN_MONO.toShort(), AudioFormat.CHANNEL_IN_STEREO.toShort())) {
-                    try {
-                        Log.d("Record", "Attempting rate " + rate + "Hz, bits: " + audioFormat + ", channel: "
-                                + channelConfig)
-                        val bufferSize = AudioRecord.getMinBufferSize(rate, channelConfig.toInt(), audioFormat.toInt())
-                        this.bufferSize=bufferSize
-                        if (bufferSize != AudioRecord.ERROR_BAD_VALUE) {
-                            // check if we can instantiate and have a success
-                            val recorder = AudioRecord(MediaRecorder.AudioSource.MIC, rate, channelConfig.toInt(), audioFormat.toInt(), bufferSize)
-
-                            if (recorder.state == AudioRecord.STATE_INITIALIZED)
-                                return recorder
-                        }
-                    } catch (e: Exception) {
-                        Log.e("Record", ""+rate + "Exception, keep trying.", e)
-                    }
-
-                }
-            }
-        }
-        return null!!
-    }
-
-    //Not used but it's better to measure decibel with the RMS power instead of the peak amplitude
-    fun calculateDB(): Double {
-        val buffer = ShortArray(this.bufferSize)
-        //aRecorder.startRecording();
-        val bufferReadResult = aRecorder.read(buffer, 0, this.bufferSize)
-
-        /*
-             * Noise level meter begins here
-             */
-        // Compute the RMS value. (Note that this does not remove DC).
-        var rms = (0..buffer.size - 1).sumByDouble { (buffer[it] * buffer[it]).toDouble() }
-        rms = Math.sqrt(rms / buffer.size)
-        val mAlpha = 0.9
-        val mGain = 0.0044
-        /*Compute a smoothed version for less flickering of the
-            // display.*/
-        val mRmsSmoothed = mAlpha + (1 - mAlpha) * rms
-        return 20.0 * Math.log10(mGain * mRmsSmoothed)
-    }
-
-    fun calc(): Double {
-        val data = ShortArray(bufferSize)
-
-        var average = 0.0
-
-        //aRecorder.startRecording()
-
-        aRecorder.read(data, 0, bufferSize)
-
-        //aRecorder.stop()
-
-        for (s in data) {
-            if (s > 0) {
-                average += Math.abs(s.toInt())
-            } else {
-                bufferSize--
-            }
-        }
-
-        val x = average / bufferSize
-
-        //aRecorder.release()
-
-        var db = 0.0
-
-        val pressure = x / 51805.5336
-
-        db = (20 * Math.log10(pressure/REFERENCE))
-
-        if(db>0)
-        {
-            return db
-        }
-        return db
     }
 
     private fun getLocation(){
@@ -311,10 +252,10 @@ class ActivityMain : AppCompatActivity(), LocationListener
             override fun run() {
                 handler.post {
                     //aRecorder.startRecording()
-                    db = ((10.0 * Math.log10(mRecorder.maxAmplitude / REFERENCE))-60).toInt()
-                    if(db>=thresholdVal && checkBoxDB.isChecked && thresholdVal!=-1){
+                    db = ((10.0 * Math.log10(mRecorder.maxAmplitude / REFERENCE))-55).toInt()
+                    if(db>=thresholdVal && checkBoxDB.isChecked && thresholdVal>0){
                         //call db controller and store values in database
-                        //Log.d("bjornson", ourDataBase.readDatabase().toString())
+                        Log.d("bjornson", ourDataBase.readDatabase().toString())
                         ourDataBase.insertToDatabase(db,v)
                         graphController.appendData(db.toDouble(),v.toDouble())
                     }

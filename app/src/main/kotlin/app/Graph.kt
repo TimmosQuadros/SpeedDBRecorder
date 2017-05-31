@@ -21,13 +21,23 @@ class Graph(graph: GraphView) {
     var x = 0.0
 
     fun initialize(){
+        velocityLine = LineGraphSeries<DataPoint>()
+        soundline = LineGraphSeries<DataPoint>()
+    }
 
-
+    fun reset(){
+        x = 0.0
+        speeds.clear()
+        dbs.clear()
     }
 
     fun appendData(db:Double, speed:Double){
-        velocityLine = LineGraphSeries<DataPoint>()
-        soundline = LineGraphSeries<DataPoint>()
+        if(x>20){
+            reset()
+        }
+
+        //Unfortunately the LineGraphSeries object doesn't have a clear method so we have to use new instances and trust the garbage collector
+        initialize()
 
         speeds.add(Point(x,speed))
         dbs.add(Point(x,db))

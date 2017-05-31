@@ -35,6 +35,7 @@ dependencies {
     compile "org.jetbrains.anko:anko-common:$anko_version"
     compile "org.jetbrains.anko:anko-sqlite:$anko_version"
     compile 'com.jjoe64:graphview:4.2.1'
+    debugCompile "com.amitshekhar.android:debug-db:1.0.0"
     testCompile 'junit:junit:4.12'
 }
 

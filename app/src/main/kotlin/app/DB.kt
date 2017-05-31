@@ -18,7 +18,7 @@ class DB(var context: Context = App.instance) : ManagedSQLiteOpenHelper(context,
 
     fun setup() {
 
-        val dbExists = context.getDatabasePath("PetDB").exists()
+        val dbExists = context.getDatabasePath("decibelDB").exists()
 
         db = writableDatabase
 
@@ -65,16 +65,26 @@ class DB(var context: Context = App.instance) : ManagedSQLiteOpenHelper(context,
         db.close()
     }
 
-    fun deleteWhereDecib(something:Int) {
+//    fun deleteWhereDecib(something:Int) {
+//
+//        db = writableDatabase
+//        val TABLE_NAME = "Decibel"
+//        val selectQuery = "DELETE FROM " + TABLE_NAME + " WHERE decib =" + something
+//        db.execSQL(selectQuery)
+//    }
+
+    fun deleteEntry(dataBaseID: Int) {
 
         db = writableDatabase
-        val TABLE_NAME = "Decibel"
-        val selectQuery = "DELETE FROM " + TABLE_NAME + " WHERE decib =" + something
-        db.execSQL(selectQuery)
+
+        db.delete("Decibel", "${DecibelTable.dbID} = ${dataBaseID}")
+
+        db.close()
     }
 
     companion object {
         private val DB_NAME = "decibelDB"
         private val DB_VERSION = 1
+        val instance by lazy { DB() }
     }
 }
