@@ -27,23 +27,19 @@ class ActivityMain : AppCompatActivity(), LocationListener
     private var permissionToRecordAccepted = false
     private var permissionToUseLocation = false
 
-    //This is standard permission integers
+    //This is standard permission integers the requestCodes for the different risky devices like the mice and gps.
     private val REQUEST_RECORD_AUDIO_PERMISSION = 200
     private val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
     private val ASK_MULTIPLE_PERMISSION_REQUEST_CODE = 123
 
     //The mediarecorder is used instead of the AudioRecorder which is deprecated!
     val mRecorder = MediaRecorder()
-    lateinit var aRecorder: AudioRecord
 
     private val  LOG_TAG: String = "Record"
     var REFERENCE = 0.00002
-    private val mSampleRates = intArrayOf(8000, 11025, 22050, 44100, 48000, 16000)
 
     private lateinit var timer: Timer
     private lateinit  var timerTask: TimerTask
-
-    private var bufferSize = 0;
 
     private val permissions = arrayOf<String>(Manifest.permission.RECORD_AUDIO,Manifest.permission.ACCESS_FINE_LOCATION)
     private lateinit var mFileName: String
@@ -59,7 +55,6 @@ class ActivityMain : AppCompatActivity(), LocationListener
 
     val handler = Handler()
 
-    //EditText (fragment) from layout activity_main.xml id=threshold
     //When the db or speed is higher than threshold it records data to database and plot data to the graphview
     private var thresholdVal = -1
 
@@ -111,8 +106,11 @@ class ActivityMain : AppCompatActivity(), LocationListener
 
     }
 
-    /**
-     *
+    /**This function is triggered when the application wants to access the microphone and location service or
+     * other highly security risky devices.
+     *@param requestCode
+     *@param permissions
+     *@param grantResults
      */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -126,14 +124,20 @@ class ActivityMain : AppCompatActivity(), LocationListener
             ASK_MULTIPLE_PERMISSION_REQUEST_CODE -> permissionToRecordAccepted = grantResults[0] === PackageManager.PERMISSION_GRANTED
         }*/
 
-        //Log.d("bjornson",""+permissionToRecordAccepted+" "+permissionToUseLocation)
         if (!permissionToRecordAccepted) finish()
         if (!permissionToUseLocation) finish()
 
         if(permissionToUseLocation) getLocation()
     }
 
-    //Implemented from LocationListener
+    /**Implemented from LocationListener interface. A listener that uses a location service
+     * specified in the getLocation() function. We only us the GPS location service to get the location.
+     * We use the distanceTo() function on the Location object to calculate the distance between two locations.
+     * We use the time function on the Location object to calculate the time difference between two locations.
+     * We can then calculate the velocity using the simple formula v = distance/delta_time. We take the average of
+     * four velocities that is for every four location changes that we register.
+     *@param location
+     */
     override fun onLocationChanged(location: Location) {
         if(isRecording) {
             locations.add(location)
@@ -156,9 +160,8 @@ class ActivityMain : AppCompatActivity(), LocationListener
                 v = (sumSpeed / speeds.size).toInt()
                 speed.text = "" + v + " km/t"
 
+                //call db controller and store values in database when the threshold has been reached
                 if (v >= thresholdVal && checkBoxSpeed.isChecked && thresholdVal != -1) {
-                    //call db controller and store values in database
-                    //Log.d("bjornson", ""+db+" "+v)
                     ourDataBase.insertToDatabase(db,v)
                     graphController.appendData(db.toDouble(),v.toDouble())
                 }
@@ -166,8 +169,6 @@ class ActivityMain : AppCompatActivity(), LocationListener
                 speeds.clear();
             }
         }
-
-        //gps.text = "long: "+location.longitude+" lat: "+location.latitude
     }
 
     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
@@ -182,6 +183,10 @@ class ActivityMain : AppCompatActivity(), LocationListener
         //TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
+    /**This function starts a TimerTask which is like a thread that has an actionEvent or a run() method which
+     * is triggered at a specified interval.
+     *
+     */
     fun startTimer() {
         timer = Timer()
         initializeTimerTask()
@@ -189,13 +194,18 @@ class ActivityMain : AppCompatActivity(), LocationListener
         timer.schedule(timerTask, 500,500) //Run every 500 ms.
     }
 
+    /**This function should free the Timer instance and stop the timer.
+     *
+     */
     fun stopTimer() {
         timer.cancel()
     }
 
 
-    /**The Media Recorder has a fsm (final state machine) i.e. you have to initialize and then call the prepare() method.
-     *Documentation: https://developer.android.com/reference/android/media/MediaRecorder.html
+    /**This function is used to "prepare" the MediaRecorder.
+     * The Media Recorder has a fsm (final state machine) i.e. you have to initialize it first and then call the prepare() method.
+     * in order to start it (see: Documentation: https://developer.android.com/reference/android/media/MediaRecorder.html)
+     *
      */
     private fun startRecording() {
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -216,11 +226,20 @@ class ActivityMain : AppCompatActivity(), LocationListener
         mRecorder.start()
     }
 
+    /**This function should reset the MediaRecorder but not free it's ressources so it can be reused and started
+     * again without having to initialize a new instance every time. Also it should'nt be necessarry to set audio
+     * source and audio encoding etc. every time you have to use the media recorder.
+     *
+     */
     private fun stopRecording() {
         mRecorder.stop()
         mRecorder.reset()
     }
 
+    /**This function checks wheter the GPS location service is available and requests for locationUpdates via. the
+     * onLocationChanged() function if it is available. It also loads the last known location to our locations list.
+     *
+     */
     private fun getLocation(){
         locationManager = applicationContext
                 .getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -239,22 +258,18 @@ class ActivityMain : AppCompatActivity(), LocationListener
         }
     }
 
-    private fun threshold(th_speed: Boolean, th_db: Boolean, speed: Int, db: Int){
-        if(th_db){
-
-        }else if(th_speed){
-
-        }
-    }
-
+    /**This function holds the anonomonys TimerTask instance which has the run method that is like a threads run
+     * method. It also contains a handler, which is a thread with special permissions i.e. permission to update or
+     * change the layout view.
+     *
+     */
     private fun initializeTimerTask() {
         timerTask = object : TimerTask() {
             override fun run() {
                 handler.post {
-                    //aRecorder.startRecording()
                     db = ((10.0 * Math.log10(mRecorder.maxAmplitude / REFERENCE))-55).toInt()
+                    //call db controller and store values in database when the threshold has been reached
                     if(db>=thresholdVal && checkBoxDB.isChecked && thresholdVal>0){
-                        //call db controller and store values in database
                         Log.d("bjornson", ourDataBase.readDatabase().toString())
                         ourDataBase.insertToDatabase(db,v)
                         graphController.appendData(db.toDouble(),v.toDouble())
