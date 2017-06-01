@@ -2,6 +2,9 @@ package app
 
 import java.io.Serializable
 
+/**
+ * Mapper class to map the data to the database.
+ */
 data class Decibel(
         val dbID: Int,
         var db: Int,
