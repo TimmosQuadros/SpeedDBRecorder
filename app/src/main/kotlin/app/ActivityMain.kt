@@ -49,7 +49,7 @@ class ActivityMain : AppCompatActivity(), LocationListener
     protected lateinit var locationManager: LocationManager
     var isGPSEnabled = false
     // The minimum distance to change Updates in meters
-    private val MIN_DISTANCE_CHANGE_FOR_UPDATES: Float = 1f // 1 meter
+    private val MIN_DISTANCE_CHANGE_FOR_UPDATES: Float = 0.1f // 1 meter
     // The minimum time between updates in milliseconds
     private val MIN_TIME_BW_UPDATES = (500).toLong() // 0.5 sec
 
