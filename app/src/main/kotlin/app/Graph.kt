@@ -20,17 +20,28 @@ class Graph(graph: GraphView) {
 
     var x = 0.0
 
+    /**Initialzies instances of LineGraphSeries which contains a collection of DataPoint objects which is part
+     * http://www.android-graphview.org/.
+     *
+     */
     fun initialize(){
         velocityLine = LineGraphSeries<DataPoint>()
         soundline = LineGraphSeries<DataPoint>()
     }
 
+    /**Resets the two mutablelist of speeds and dbs (decibel values) which is used too append data points to
+     * the graph series.
+     *
+     */
     fun reset(){
         x = 0.0
         speeds.clear()
         dbs.clear()
     }
 
+    /**This function is called every time the threshold has been reached and redraws the entire graph every time.
+     *
+     */
     fun appendData(db:Double, speed:Double){
         if(x>20){
             reset()
@@ -53,6 +64,9 @@ class Graph(graph: GraphView) {
         x++
     }
 
+    /**Redraws the graph and set color, scale etc.
+     *
+     */
     fun drawGraph(){
         velocityLine.title = "Hastighed"
         soundline.title = "DB"

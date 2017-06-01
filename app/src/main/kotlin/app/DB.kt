@@ -10,12 +10,17 @@ class DB(var context: Context = App.instance) : ManagedSQLiteOpenHelper(context,
     lateinit var db:SQLiteDatabase
 
     override fun onCreate(datab: SQLiteDatabase) {
-        //db.execSQL("CREATE TABLE if not exists Decibel (dataID int NOT NULL AUTO_INCREMENT, decib int, speed int, PRIMARY KEY (dataID);")
+        //db.execSQL("CREATE TABLE if not exists Decibel (dataID int NOT NULL AUTO_INCREMENT, db int, speed int, PRIMARY KEY (dataID);")
     }
     override fun onUpgrade(datab: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 
     }
 
+    /**Setup the db with tables, but only create the table if the db doesn't already exists so it doesn't override
+     * or wipe out the entire db if it already exists.
+     *
+     *
+     */
     fun setup() {
 
         val dbExists = context.getDatabasePath("decibelDB").exists()
@@ -34,7 +39,10 @@ class DB(var context: Context = App.instance) : ManagedSQLiteOpenHelper(context,
         db.close()
     }
 
-
+    /**CRUD (Create) function to create a row.
+     * @param decibel
+     * @param speed
+     */
     fun insertToDatabase(decibel:Int,speed:Int){
 
         db = writableDatabase
@@ -49,6 +57,9 @@ class DB(var context: Context = App.instance) : ManagedSQLiteOpenHelper(context,
         //db.execSQL("INSERT INTO Decibel (decib,speed) VALUES ("+decib+","+speed+")")
     }
 
+    /**CRUD (retreive) function to retreive alll from the specified table
+     *
+     */
     fun readDatabase(): List<Map<String, Any?>> {
 
         db = readableDatabase
@@ -73,6 +84,9 @@ class DB(var context: Context = App.instance) : ManagedSQLiteOpenHelper(context,
 //        db.execSQL(selectQuery)
 //    }
 
+    /**CRUD (delete) function to delete from selected db.
+     * @param dataBaseID
+     */
     fun deleteEntry(dataBaseID: Int) {
 
         db = writableDatabase
@@ -82,6 +96,11 @@ class DB(var context: Context = App.instance) : ManagedSQLiteOpenHelper(context,
         db.close()
     }
 
+    /**The companion object makes the members look static so we can call it like this:
+     * Class_Name.Companion.instance. But at runtime they act like real instances of objects and can
+     * for example implement interfaces.
+     *
+     */
     companion object {
         private val DB_NAME = "decibelDB"
         private val DB_VERSION = 1
