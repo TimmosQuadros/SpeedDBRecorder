@@ -264,6 +264,7 @@ class ActivityMain : AppCompatActivity(), LocationListener
      *
      */
     private fun initializeTimerTask() {
+        var count = 0
         timerTask = object : TimerTask() {
             override fun run() {
                 handler.post {
@@ -271,8 +272,11 @@ class ActivityMain : AppCompatActivity(), LocationListener
                     //call db controller and store values in database when the threshold has been reached
                     if(db>=thresholdVal && checkBoxDB.isChecked && thresholdVal>0){
                         Log.d("bjornson", ourDataBase.readDatabase().toString())
+                        Log.d("MaxAmp",""+mRecorder.maxAmplitude)
+                        if(count==6) ourDataBase.deleteEntry(5)
                         ourDataBase.insertToDatabase(db,v)
                         graphController.appendData(db.toDouble(),v.toDouble())
+                        count++
                     }
                     decibel.text = ""+db+" db"
                 }
